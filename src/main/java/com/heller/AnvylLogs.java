@@ -51,8 +51,8 @@ public class AnvylLogs {
 
     private void prettyPrint() {
         System.out.println("----- Global Averages ----");
-        System.out.printf("Average: %s\n", mAverage / mTotalValid);
-        System.out.printf("Longest: %s\n", mSlowest);
+        System.out.printf("Average Response Time: %.2f seconds\n", (float) (mAverage / mTotalValid) / 1000);
+        System.out.printf("Longest Response Time: %.2f seconds\n", (float) mSlowest / 1000);
         System.out.printf("Total Requests: %s\n", mTotalValid);
         System.out.println("--------------------------");
         for(String k: mLogMap.keySet()) {
@@ -61,7 +61,7 @@ public class AnvylLogs {
             for(Integer e: t.respCodesCount.keySet()) {
                 System.out.printf("Request codes to above endpoint code: %s count: %s\n", e, t.respCodesCount.get(e));
             }
-            System.out.printf("avg Response time to above endpoint: %s\n", t.respTime);
+            System.out.printf("avg Response time to above endpoint: %.2f seconds\n", (float) (t.respTime / t.count) / 1000);
             System.out.println("--------------------------");
         }
     }
@@ -97,7 +97,9 @@ public class AnvylLogs {
 
     private void parseLine(String xLine) {
         LogLine l = new LogLine(xLine);
-        if (l.getUserAgent().equals("Ruby"))
+        if (l.getUserAgent().equalsIgnoreCase("Ruby"))
+            return;
+        if (l.getUrl().equalsIgnoreCase("/ok"))
             return;
         String tUrl = l.getUrl();
         mTotalValid += 1;
@@ -107,7 +109,7 @@ public class AnvylLogs {
 
         if (mLogMap.containsKey(tUrl)) {
             LogStruct tLog = mLogMap.get(tUrl);
-            tLog.respTime = l.getTime();
+            tLog.respTime += l.getTime();
             int respCode = l.getRespCode();
             if (tLog.respCodesCount.containsKey(respCode)) {
                 int tRespCodeCount = tLog.respCodesCount.get(respCode);
